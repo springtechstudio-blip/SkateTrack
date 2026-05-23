@@ -1,9 +1,11 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "echo 'pre-built'",
+  "installCommand": "echo 'skip'",
   "outputDirectory": "dist/client",
   "framework": null,
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
+
 
