@@ -16,7 +16,13 @@ function VerifySuccessPage() {
         </div>
         <h1 className="text-3xl font-bold tracking-tight mb-2">Email confermata!</h1>
         <p className="text-muted-foreground mb-6">Il tuo account è stato verificato con successo.</p>
-        <p className="text-sm text-muted-foreground">
+        <Link
+          to="/login"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md hover:opacity-90 transition-opacity"
+        >
+          Vai al login
+        </Link>
+        <p className="text-sm text-muted-foreground mt-4">
           Se sei su Android, torna sull'app e fai il login.
         </p>
       </div>
