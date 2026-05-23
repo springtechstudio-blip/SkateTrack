@@ -1,11 +1,8 @@
 {
-  "buildCommand": "npm run build && node scripts/fix-vercel-static.cjs",
   "installCommand": "npm install",
   "outputDirectory": "dist/client",
-  "framework": null,
+  "framework": "vite",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
-
-
