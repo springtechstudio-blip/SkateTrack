@@ -16,20 +16,9 @@ function VerifySuccessPage() {
         </div>
         <h1 className="text-3xl font-bold tracking-tight mb-2">Email confermata!</h1>
         <p className="text-muted-foreground mb-6">Il tuo account è stato verificato con successo.</p>
-        <div className="flex flex-col gap-3">
-          <a
-            href="skatetrack://"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md hover:opacity-90 transition-opacity"
-          >
-            Torna all'app
-          </a>
-          <Link
-            to="/login"
-            className="inline-flex items-center justify-center rounded-md border border-border bg-transparent px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
-          >
-            Vai al login
-          </Link>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Se sei su Android, torna sull'app e fai il login.
+        </p>
       </div>
     </main>
   );
