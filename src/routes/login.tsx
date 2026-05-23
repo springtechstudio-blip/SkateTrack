@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { RollerSkate } from "@/components/icons/RollerSkate";
+
 
 export const Route = createFileRoute("/login")({ component: LoginPage });
 
@@ -26,12 +26,12 @@ function LoginPage() {
       <div className="absolute inset-0 -z-10 opacity-40 bg-[radial-gradient(circle_at_top,oklch(0.78_0.16_165/0.18),transparent_55%)]" />
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <div
-            className="h-14 w-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: "var(--gradient-primary)", boxShadow: "var(--glow-primary)" }}
-          >
-            <RollerSkate className="h-7 w-7 text-primary-foreground" strokeWidth={2.2} />
-          </div>
+          <img
+            src="/icon-app.jpg"
+            alt="SkateTrack"
+            className="h-16 w-16 rounded-2xl mb-4 object-cover shadow-lg"
+            style={{ boxShadow: "var(--glow-primary)" }}
+          />
           <h1 className="text-3xl font-bold tracking-tight">SkateTrack</h1>
           <p className="text-sm text-muted-foreground mt-1">Il tuo diario di pattinaggio e abitudini</p>
         </div>
