@@ -7,8 +7,14 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  build: {
-    outDir: "dist/client",
-    emptyOutDir: true,
+  vite: {
+    build: {
+      outDir: "dist/client",
+      emptyOutDir: true,
+    },
+  },
+  cloudflare: false,
+  tanstackStart: {
+    spa: { enabled: true },
   },
 });
