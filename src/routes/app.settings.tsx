@@ -258,9 +258,9 @@ function SettingsPage() {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["profile", user?.id] });
-      toast.success(localT.saved);
+      toast.success(`${vars.display_name} — ${t("saved")}`);
     },
     onError: (err: any) => {
       toast.error(err.message);

@@ -33,7 +33,7 @@ export function RichEditor({ value, onChange, userId, placeholder }: Props) {
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3] }, link: false, underline: false }),
       Underline,
       Link.configure({ openOnClick: false, autolink: true }),
       Image,

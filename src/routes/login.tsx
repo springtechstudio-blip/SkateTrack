@@ -71,7 +71,7 @@ function AuthForm({
     setBusy(true);
     try {
       if (mode === "signup") {
-        const redirectTo = `${window.location.origin}/app`;
+        const redirectTo = import.meta.env.VITE_SUPABASE_REDIRECT_URL || `${window.location.origin}/app`;
         const { error } = await supabase.auth.signUp({
           email,
           password,
