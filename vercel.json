@@ -1,6 +1,6 @@
 {
-  "buildCommand": "echo 'pre-built'",
-  "installCommand": "echo 'skip'",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
   "outputDirectory": "dist/client",
   "framework": null,
   "rewrites": [
