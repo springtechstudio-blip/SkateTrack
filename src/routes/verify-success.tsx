@@ -14,14 +14,22 @@ function VerifySuccessPage() {
         >
           <RollerSkate className="h-7 w-7 text-primary-foreground" strokeWidth={2.2} />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Email confermata! 🎉</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Email confermata!</h1>
         <p className="text-muted-foreground mb-6">Il tuo account è stato verificato con successo.</p>
-        <Link
-          to="/login"
-          className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md hover:opacity-90 transition-opacity"
-        >
-          Vai al login
-        </Link>
+        <div className="flex flex-col gap-3">
+          <a
+            href="skatetrack://"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md hover:opacity-90 transition-opacity"
+          >
+            Torna all'app
+          </a>
+          <Link
+            to="/login"
+            className="inline-flex items-center justify-center rounded-md border border-border bg-transparent px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+          >
+            Vai al login
+          </Link>
+        </div>
       </div>
     </main>
   );
