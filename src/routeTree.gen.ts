@@ -17,6 +17,7 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSkatingRouteImport } from './routes/app.skating'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppNotesRouteImport } from './routes/app.notes'
+import { Route as AppSkatingIndexRouteImport } from './routes/app.skating.index'
 import { Route as AppSkatingStatsRouteImport } from './routes/app.skating.stats'
 import { Route as AppHabitsIdRouteImport } from './routes/app.habits.$id'
 
@@ -60,6 +61,11 @@ const AppNotesRoute = AppNotesRouteImport.update({
   path: '/notes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSkatingIndexRoute = AppSkatingIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSkatingRoute,
+} as any)
 const AppSkatingStatsRoute = AppSkatingStatsRouteImport.update({
   id: '/stats',
   path: '/stats',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/app/habits/$id': typeof AppHabitsIdRoute
   '/app/skating/stats': typeof AppSkatingStatsRoute
+  '/app/skating/': typeof AppSkatingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -89,10 +96,10 @@ export interface FileRoutesByTo {
   '/verify-success': typeof VerifySuccessRoute
   '/app/notes': typeof AppNotesRoute
   '/app/settings': typeof AppSettingsRoute
-  '/app/skating': typeof AppSkatingRouteWithChildren
   '/app': typeof AppIndexRoute
   '/app/habits/$id': typeof AppHabitsIdRoute
   '/app/skating/stats': typeof AppSkatingStatsRoute
+  '/app/skating': typeof AppSkatingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,6 +113,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/app/habits/$id': typeof AppHabitsIdRoute
   '/app/skating/stats': typeof AppSkatingStatsRoute
+  '/app/skating/': typeof AppSkatingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,6 +128,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/habits/$id'
     | '/app/skating/stats'
+    | '/app/skating/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -127,10 +136,10 @@ export interface FileRouteTypes {
     | '/verify-success'
     | '/app/notes'
     | '/app/settings'
-    | '/app/skating'
     | '/app'
     | '/app/habits/$id'
     | '/app/skating/stats'
+    | '/app/skating'
   id:
     | '__root__'
     | '/'
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/habits/$id'
     | '/app/skating/stats'
+    | '/app/skating/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNotesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/skating/': {
+      id: '/app/skating/'
+      path: '/'
+      fullPath: '/app/skating/'
+      preLoaderRoute: typeof AppSkatingIndexRouteImport
+      parentRoute: typeof AppSkatingRoute
+    }
     '/app/skating/stats': {
       id: '/app/skating/stats'
       path: '/stats'
@@ -229,10 +246,12 @@ declare module '@tanstack/react-router' {
 
 interface AppSkatingRouteChildren {
   AppSkatingStatsRoute: typeof AppSkatingStatsRoute
+  AppSkatingIndexRoute: typeof AppSkatingIndexRoute
 }
 
 const AppSkatingRouteChildren: AppSkatingRouteChildren = {
   AppSkatingStatsRoute: AppSkatingStatsRoute,
+  AppSkatingIndexRoute: AppSkatingIndexRoute,
 }
 
 const AppSkatingRouteWithChildren = AppSkatingRoute._addFileChildren(
