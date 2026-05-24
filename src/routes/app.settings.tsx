@@ -127,8 +127,8 @@ function SettingsPage() {
         addElement: "Aggiungi Elemento",
         addLocation: "Aggiungi Luogo",
         addType: "Aggiungi Tipo",
-        archive: "Archivia",
-        unarchive: "Ripristina",
+        saved: "Salvato",
+        delete: "Eliminato",
         dangerZoneTitle: "Zona Pericolosa",
         dangerZoneDesc: "Queste azioni sono distruttive e irreversibili. Procedi con estrema cautela.",
         deleteDataTitle: "Elimina Tutti i Dati",
@@ -193,8 +193,8 @@ function SettingsPage() {
         addElement: "Add Element",
         addLocation: "Add Location",
         addType: "Add Type",
-        archive: "Archive",
-        unarchive: "Restore",
+        saved: "Saved",
+        delete: "Deleted",
         dangerZoneTitle: "Dangerous Zone",
         dangerZoneDesc: "These actions are destructive and irreversible. Proceed with extreme caution.",
         deleteDataTitle: "Delete All Data",
@@ -426,13 +426,16 @@ function SettingsPage() {
         backupData[tName] = data || [];
       }
 
-      const fileBlob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
-      const downloadUrl = URL.createObjectURL(fileBlob);
-      const downloadAnchor = document.createElement("a");
-      downloadAnchor.href = downloadUrl;
-      downloadAnchor.download = `skatetrack_backup_${new Date().toISOString().split("T")[0]}.json`;
-      downloadAnchor.click();
-      URL.revokeObjectURL(downloadUrl);
+      const content = JSON.stringify(backupData, null, 2);
+      const filename = `skatetrack_backup_${new Date().toISOString().split("T")[0]}.json`;
+      const uri = "data:application/json;charset=utf-8," + encodeURIComponent(content);
+      const a = document.createElement("a");
+      a.href = uri;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.open(uri, "_blank");
       toast.dismiss();
       toast.success("JSON backup downloaded!");
     } catch (err: any) {
@@ -1174,9 +1177,7 @@ function SettingsPage() {
                               </Button>
                             </div>
                           ) : (
-                            <span className={`font-medium flex-1 truncate ${el.archived ? "line-through text-muted-foreground" : ""}`}>
-                              {el.name}
-                            </span>
+                            <span className="font-medium flex-1 truncate">{el.name}</span>
                           )}
 
                           <div className="flex items-center gap-1">
@@ -1193,15 +1194,6 @@ function SettingsPage() {
                                 <Edit2 className="h-3.5 w-3.5" />
                               </Button>
                             )}
-
-                            <Button
-                              size="xs"
-                              variant="ghost"
-                              className={`h-7 px-2 text-[10px] font-semibold ${el.archived ? "text-emerald-500 hover:text-emerald-600" : "text-muted-foreground hover:text-foreground"}`}
-                              onClick={() => updateElementMutation.mutate({ id: el.id, archived: !el.archived })}
-                            >
-                              {el.archived ? "Unarch" : "Arch"}
-                            </Button>
 
                             <Button
                               size="icon"

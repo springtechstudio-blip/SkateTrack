@@ -222,7 +222,7 @@ function NewSessionDialog() {
   const elementsQ = useQuery({
     queryKey: ["skating_elements"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("skating_elements").select("*").order("name");
+      const { data, error } = await supabase.from("skating_elements").select("*").eq("archived", false).order("name");
       if (error) throw error;
       return data ?? [];
     },
