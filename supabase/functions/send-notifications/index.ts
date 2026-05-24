@@ -1,16 +1,5 @@
-// Supabase Edge Function: send-notifications
-// Sends notifications via Firebase Cloud Messaging (HTTP v1 API)
-//
-// Set these secrets in Supabase Dashboard > Edge Functions:
-//   FCM_SERVICE_ACCOUNT = entire content of Firebase service account JSON
-//
-// Schedule with pg_cron (run in Supabase SQL):
-//   SELECT cron.schedule('send-notifications', '* * * * *',
-//     'SELECT net.http_post(url:=''https://<project>.supabase.co/functions/v1/send-notifications'',
-//      headers:=''{"Authorization":"Bearer <anon-key>"}'' )');
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SignJWT } from "https://esm.sh/jose@5.9.6";
+import { SignJWT } from "npm:jose@5.9.6";
 
 async function getAccessToken(): Promise<string> {
   const raw = Deno.env.get("FCM_SERVICE_ACCOUNT") ?? "";
@@ -57,21 +46,22 @@ serve(async (_req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const projectId = (JSON.parse(Deno.env.get("FCM_SERVICE_ACCOUNT") ?? "{}")).project_id;
-    if (!projectId) return new Response("Missing FCM_SERVICE_ACCOUNT", { status: 500 });
+    const raw = Deno.env.get("FCM_SERVICE_ACCOUNT") ?? "";
+    if (!raw) return new Response("Missing FCM_SERVICE_ACCOUNT", { status: 500 });
+    const projectId = JSON.parse(raw).project_id;
 
-    const { data: rows, error } = await fetch(
+    const res = await fetch(
       `${supabaseUrl}/rest/v1/notification_queue?sent_at=is.null&order=created_at.asc&limit=10`,
       { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } },
-    ).then((r) => r.json());
-
-    if (error || !rows?.length) return new Response("OK");
+    );
+    const rows = await res.json();
+    if (!rows?.length) return new Response("OK");
 
     const token = await getAccessToken();
     const fcmUrl = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
     for (const row of rows) {
-      const res = await fetch(fcmUrl, {
+      const fcmRes = await fetch(fcmUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -86,7 +76,7 @@ serve(async (_req) => {
         }),
       });
 
-      if (res.ok) {
+      if (fcmRes.ok) {
         await fetch(`${supabaseUrl}/rest/v1/notification_queue?id=eq.${row.id}`, {
           method: "PATCH",
           headers: {
