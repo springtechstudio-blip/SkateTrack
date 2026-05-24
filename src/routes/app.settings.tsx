@@ -428,14 +428,18 @@ function SettingsPage() {
 
       const content = JSON.stringify(backupData, null, 2);
       const filename = `skatetrack_backup_${new Date().toISOString().split("T")[0]}.json`;
-      const uri = "data:application/json;charset=utf-8," + encodeURIComponent(content);
-      const a = document.createElement("a");
-      a.href = uri;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.open(uri, "_blank");
+      const file = new File([content], filename, { type: "application/json" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "SkateTrack Backup" });
+      } else {
+        const uri = "data:application/json;charset=utf-8," + encodeURIComponent(content);
+        const a = document.createElement("a");
+        a.href = uri;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
       toast.dismiss();
       toast.success("JSON backup downloaded!");
     } catch (err: any) {
