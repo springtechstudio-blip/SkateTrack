@@ -27,8 +27,6 @@ type Session = {
   location: string | null;
 };
 
-const DEFAULT_TYPES = ["Tecnica", "Coreografia", "Resistenza", "Gara", "Libera"];
-const DEFAULT_ELEMENTS = ["Axel", "Salchow", "Toeloop", "Loop", "Flip", "Lutz", "Spin", "Spirale"];
 const QUALITIES = ["Provato", "Discreto", "Buono", "Ottimo"];
 const MOODS = ["😞", "😐", "🙂", "😄", "🤩"];
 const TYPE_COLORS = ["oklch(0.78 0.16 165)", "oklch(0.7 0.18 250)", "oklch(0.75 0.18 310)", "oklch(0.82 0.16 85)", "oklch(0.7 0.2 30)"];
@@ -208,7 +206,7 @@ function NewSessionDialog() {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [duration, setDuration] = useState(60);
   const [intensity, setIntensity] = useState(3);
-  const [type, setType] = useState(DEFAULT_TYPES[0]);
+  const [type, setType] = useState("");
   const [notes, setNotes] = useState("");
   const [rating, setRating] = useState(7);
   const [mood, setMood] = useState<string>(MOODS[2]);
@@ -220,6 +218,35 @@ function NewSessionDialog() {
   const [nextGoal, setNextGoal] = useState("");
   const [location, setLocation] = useState("");
   const [elements, setElements] = useState<Record<string, string>>({});
+
+  const elementsQ = useQuery({
+    queryKey: ["skating_elements"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("skating_elements").select("*").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const typesQ = useQuery({
+    queryKey: ["skating_types"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("skating_session_types").select("*").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const locationsQ = useQuery({
+    queryKey: ["skating_locations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("skating_locations").select("*").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const dbElements = elementsQ.data ?? [];
+  const dbTypes = typesQ.data ?? [];
+  const dbLocations = locationsQ.data ?? [];
 
   const toggleEl = (name: string) => {
     setElements((prev) => {
@@ -233,23 +260,49 @@ function NewSessionDialog() {
   const create = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("No user");
+      if (!type.trim()) throw new Error("Seleziona o scrivi un tipo");
+
+      const finalType = type.trim();
+      const finalLocation = location.trim() || null;
+
+      const typeExists = dbTypes.some((t: any) => t.name === finalType);
+      if (!typeExists) {
+        const { error: e1 } = await supabase.from("skating_session_types").insert({
+          user_id: user.id, name: finalType,
+        });
+        if (e1) throw e1;
+      }
+
+      if (finalLocation) {
+        const locExists = dbLocations.some((l: any) => l.name === finalLocation);
+        if (!locExists) {
+          const { error: e2 } = await supabase.from("skating_locations").insert({
+            user_id: user.id, name: finalLocation,
+          });
+          if (e2) throw e2;
+        }
+      }
+
       const { data, error } = await supabase.from("skating_sessions").insert({
-        user_id: user.id, date, duration_min: duration, intensity, session_type: type,
+        user_id: user.id, date, duration_min: duration, intensity, session_type: finalType,
         notes: notes || null, rating, mood, energy, difficulty,
         went_well: wentWell || null, worked: worked || null, improve: improve || null, next_goal: nextGoal || null,
-        location: location || null,
+        location: finalLocation,
       }).select().single();
       if (error) throw error;
       const rows = Object.entries(elements).map(([n, q]) => ({ session_id: data.id, user_id: user.id, element_name: n, quality: q }));
       if (rows.length) {
-        const { error: e2 } = await supabase.from("skating_session_elements").insert(rows);
-        if (e2) throw e2;
+        const { error: e3 } = await supabase.from("skating_session_elements").insert(rows);
+        if (e3) throw e3;
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["skating"] });
+      qc.invalidateQueries({ queryKey: ["skating_types"] });
+      qc.invalidateQueries({ queryKey: ["skating_locations"] });
+      qc.invalidateQueries({ queryKey: ["skating_elements"] });
       toast.success("Sessione salvata");
-      setOpen(false); setNotes(""); setElements({});
+      setOpen(false); setNotes(""); setElements({}); setType(""); setLocation("");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -269,13 +322,19 @@ function NewSessionDialog() {
             <div className="space-y-1.5"><Label htmlFor="sdur">Durata (min)</Label><Input id="sdur" type="number" min={1} value={duration} onChange={(e) => setDuration(parseInt(e.target.value) || 0)} required /></div>
           </div>
           <div className="space-y-1.5">
-            <Label>Tipo</Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-              <SelectContent>{DEFAULT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
+            <Label htmlFor="stype">Tipo</Label>
+            <Input id="stype" list="type-list" value={type} onChange={(e) => setType(e.target.value)} placeholder="es. Tecnica" required />
+            <datalist id="type-list">
+              {dbTypes.map((t: any) => <option key={t.id} value={t.name} />)}
+            </datalist>
           </div>
-          <div className="space-y-1.5"><Label htmlFor="sloc">Luogo</Label><Input id="sloc" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="es. Palaghiaccio" /></div>
+          <div className="space-y-1.5">
+            <Label htmlFor="sloc">Luogo</Label>
+            <Input id="sloc" list="loc-list" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="es. Palaghiaccio" />
+            <datalist id="loc-list">
+              {dbLocations.map((l: any) => <option key={l.id} value={l.name} />)}
+            </datalist>
+          </div>
           <div className="space-y-1.5">
             <Label>Voto: {rating}/10</Label>
             <input type="range" min={1} max={10} step={0.5} value={rating} onChange={(e) => setRating(+e.target.value)} className="w-full accent-primary" />
@@ -310,22 +369,29 @@ function NewSessionDialog() {
           </div>
           <div className="space-y-1.5">
             <Label>Elementi lavorati</Label>
-            <div className="space-y-1.5">
-              {DEFAULT_ELEMENTS.map((el) => {
-                const sel = elements[el];
-                return (
-                  <div key={el} className="flex items-center gap-2">
-                    <button type="button" onClick={() => toggleEl(el)} className={`text-xs px-2 py-1 rounded-md font-semibold flex-1 text-left ${sel ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>{el}</button>
-                    {sel && (
-                      <Select value={sel} onValueChange={(v) => setElements({ ...elements, [el]: v })}>
-                        <SelectTrigger className="h-7 text-xs w-28 bg-input border-border"><SelectValue /></SelectTrigger>
-                        <SelectContent>{QUALITIES.map((q) => <SelectItem key={q} value={q}>{q}</SelectItem>)}</SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            {dbElements.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">
+                Aggiungi gli elementi nelle{' '}
+                <Link to="/app/settings" className="text-primary underline">impostazioni</Link>.
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                {dbElements.map((el: any) => {
+                  const sel = elements[el.name];
+                  return (
+                    <div key={el.id} className="flex items-center gap-2">
+                      <button type="button" onClick={() => toggleEl(el.name)} className={`text-xs px-2 py-1 rounded-md font-semibold flex-1 text-left ${sel ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>{el.name}</button>
+                      {sel && (
+                        <Select value={sel} onValueChange={(v) => setElements({ ...elements, [el.name]: v })}>
+                          <SelectTrigger className="h-7 text-xs w-28 bg-input border-border"><SelectValue /></SelectTrigger>
+                          <SelectContent>{QUALITIES.map((q) => <SelectItem key={q} value={q}>{q}</SelectItem>)}</SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
           <div className="space-y-1.5"><Label>Com'è andata</Label><Textarea value={wentWell} onChange={(e) => setWentWell(e.target.value)} rows={2} /></div>
           <div className="space-y-1.5"><Label>Cosa ha funzionato</Label><Textarea value={worked} onChange={(e) => setWorked(e.target.value)} rows={2} /></div>
