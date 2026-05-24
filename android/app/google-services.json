@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "246507472554",
+    "project_id": "skatetrack-df01d",
+    "storage_bucket": "skatetrack-df01d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:246507472554:android:51b9c936e8ffebf9d172d3",
+        "android_client_info": {
+          "package_name": "com.skatetrack.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBILLjDmK94WqM04ip3Gt0rAhoCQD8KFdQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
