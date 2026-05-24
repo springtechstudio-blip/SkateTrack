@@ -428,20 +428,26 @@ function SettingsPage() {
 
       const content = JSON.stringify(backupData, null, 2);
       const filename = `skatetrack_backup_${new Date().toISOString().split("T")[0]}.json`;
-      const file = new File([content], filename, { type: "application/json" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "SkateTrack Backup" });
-      } else {
-        const uri = "data:application/json;charset=utf-8," + encodeURIComponent(content);
-        const a = document.createElement("a");
-        a.href = uri;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
       toast.dismiss();
-      toast.success("JSON backup downloaded!");
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: "SkateTrack Backup", text: content.substring(0, 50000) });
+          return;
+        } catch (_) {}
+      }
+      try {
+        await navigator.clipboard.writeText(content);
+        toast.success("JSON copiato negli appunti!");
+      } catch (_) {
+        const blob = new Blob([content], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("JSON backup downloaded!");
+      }
     } catch (err: any) {
       toast.dismiss();
       toast.error("Export failure: " + err.message);
