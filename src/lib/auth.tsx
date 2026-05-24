@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { registerPushNotifications, unregisterPushNotifications } from "./notifications";
 
 type AuthCtx = {
   user: User | null;
@@ -27,6 +28,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (session?.user) {
+      registerPushNotifications(session.user.id);
+    } else {
+      unregisterPushNotifications("");
+    }
+  }, [session]);
+
   return (
     <Ctx.Provider
       value={{
@@ -34,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         signOut: async () => {
+          if (session?.user) await unregisterPushNotifications(session.user.id);
           await supabase.auth.signOut();
         },
       }}

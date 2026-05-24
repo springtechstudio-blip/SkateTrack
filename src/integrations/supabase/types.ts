@@ -14,43 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
-      habit_completions: {
+      push_tokens: {
+        Row: { id: string; user_id: string; token: string; platform: string; created_at: string }
+        Insert: { id?: string; user_id: string; token: string; platform?: string; created_at?: string }
+        Update: { id?: string; user_id?: string; token?: string; platform?: string; created_at?: string }
+        Relationships: []
+      }
+      notification_queue: {
+        Row: { id: number; user_id: string; token: string; title: string; body: string; language: string | null; created_at: string; sent_at: string | null }
+        Insert: { id?: number; user_id: string; token: string; title: string; body: string; language?: string | null; created_at?: string; sent_at?: string | null }
+        Update: { id?: number; user_id?: string; token?: string; title?: string; body?: string; language?: string | null; created_at?: string; sent_at?: string | null }
+        Relationships: []
+      }
+      profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
-          date: string
-          habit_id: string
+          display_name: string | null
           id: string
-          note: string | null
-          status: string
-          user_id: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
-          date: string
-          habit_id: string
-          id?: string
-          note?: string | null
-          status?: string
-          user_id: string
+          display_name?: string | null
+          id: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
-          date?: string
-          habit_id?: string
+          display_name?: string | null
           id?: string
-          note?: string | null
-          status?: string
-          user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "habit_completions_habit_id_fkey"
-            columns: ["habit_id"]
-            isOneToOne: false
-            referencedRelation: "habits"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       habits: {
         Row: {
