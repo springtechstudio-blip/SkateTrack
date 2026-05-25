@@ -347,6 +347,7 @@ function SettingsPage() {
       const { data, error } = await supabase.from("user_settings").select("*").eq("user_id", user.id).single();
       if (error) {
         // Auto-initialize standard default user_settings if record was missing
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
         const defaults = {
           user_id: user.id,
           theme: "dark",
@@ -356,6 +357,7 @@ function SettingsPage() {
           evening_summary: false,
           evening_time: "21:00",
           avatar_url: null,
+          timezone: tz,
         };
         await supabase.from("user_settings").insert(defaults);
         return defaults;
@@ -366,6 +368,14 @@ function SettingsPage() {
   });
 
   const appSettings = settingsQuery.data;
+
+  // Auto-save timezone if missing (existing users)
+  useEffect(() => {
+    if (appSettings && !appSettings.timezone) {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      updateSettings.mutate({ timezone: tz });
+    }
+  }, [appSettings]);
 
   // Preferences mutator
   const updateSettings = useMutation({
@@ -715,6 +725,7 @@ function SettingsPage() {
         evening_summary: false,
         evening_time: "21:00",
         avatar_url: null,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         updated_at: new Date().toISOString(),
       });
 

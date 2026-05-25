@@ -67,13 +67,13 @@ serve(async (_req) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          message: {
-            token: row.token,
-            notification: { title: row.title, body: row.body },
-            android: { notification: { sound: "default" } },
-          },
-        }),
+          body: JSON.stringify({
+            message: {
+              token: row.token,
+              notification: { title: row.title, body: row.body },
+              android: { notification: { sound: "default", channelId: "default_channel", smallIcon: "ic_notification" } },
+            },
+          }),
       });
 
       if (fcmRes.ok) {

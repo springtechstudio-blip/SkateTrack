@@ -322,9 +322,12 @@ export type Database = {
           evening_summary: boolean
           evening_time: string
           habit_notifications: boolean
+          habit_notifications_count: number
           language: string
+          last_habit_notification_date: string | null
           notifications_enabled: boolean
           theme: string
+          timezone: string
           updated_at: string
           user_id: string
         }
@@ -333,9 +336,12 @@ export type Database = {
           evening_summary?: boolean
           evening_time?: string
           habit_notifications?: boolean
+          habit_notifications_count?: number
           language?: string
+          last_habit_notification_date?: string | null
           notifications_enabled?: boolean
           theme?: string
+          timezone?: string
           updated_at?: string
           user_id: string
         }
@@ -344,9 +350,12 @@ export type Database = {
           evening_summary?: boolean
           evening_time?: string
           habit_notifications?: boolean
+          habit_notifications_count?: number
           language?: string
+          last_habit_notification_date?: string | null
           notifications_enabled?: boolean
           theme?: string
+          timezone?: string
           updated_at?: string
           user_id?: string
         }
