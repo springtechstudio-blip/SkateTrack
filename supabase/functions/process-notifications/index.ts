@@ -107,7 +107,7 @@ serve(async () => {
         }
       }
 
-      if (s.evening_summary && s.evening_time === time) {
+      if (s.evening_summary && time >= s.evening_time && s.last_evening_summary_date !== today) {
         const [sessions, hc] = await Promise.all([
           (await fetch(`${url}/rest/v1/skating_sessions?select=id&user_id=eq.${s.user_id}&date=eq.${today}`, { headers: hdrs })).json(),
           (await fetch(`${url}/rest/v1/habit_completions?select=id&user_id=eq.${s.user_id}&date=eq.${today}`, { headers: hdrs })).json(),
@@ -125,7 +125,14 @@ serve(async () => {
             },
           }),
         })).ok;
-        if (ok) sent++;
+        if (ok) {
+          await fetch(`${url}/rest/v1/user_settings?user_id=eq.${s.user_id}`, {
+            method: "PATCH",
+            headers: { ...hdrs, Prefer: "return=minimal" },
+            body: JSON.stringify({ last_evening_summary_date: today }),
+          });
+          sent++;
+        }
       }
     }
 

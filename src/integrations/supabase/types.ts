@@ -324,6 +324,7 @@ export type Database = {
           habit_notifications: boolean
           habit_notifications_count: number
           language: string
+          last_evening_summary_date: string | null
           last_habit_notification_date: string | null
           notifications_enabled: boolean
           theme: string
@@ -338,6 +339,7 @@ export type Database = {
           habit_notifications?: boolean
           habit_notifications_count?: number
           language?: string
+          last_evening_summary_date?: string | null
           last_habit_notification_date?: string | null
           notifications_enabled?: boolean
           theme?: string
@@ -352,6 +354,7 @@ export type Database = {
           habit_notifications?: boolean
           habit_notifications_count?: number
           language?: string
+          last_evening_summary_date?: string | null
           last_habit_notification_date?: string | null
           notifications_enabled?: boolean
           theme?: string
