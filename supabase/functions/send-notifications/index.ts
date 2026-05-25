@@ -71,7 +71,7 @@ serve(async (_req) => {
             message: {
               token: row.token,
               notification: { title: row.title, body: row.body },
-              android: { notification: { sound: "default", channelId: "default_channel", smallIcon: "ic_notification" } },
+              android: { notification: { sound: "default", channel_id: "default_channel", small_icon: "ic_notification" } },
             },
           }),
       });

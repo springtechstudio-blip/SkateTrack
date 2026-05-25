@@ -90,7 +90,7 @@ serve(async () => {
                 message: {
                   token: deviceToken,
                   notification: { title: "Promemoria abitudini 📋", body },
-                  android: { notification: { sound: "default", channelId: "default_channel", smallIcon: "ic_notification" } },
+                  android: { notification: { sound: "default", channel_id: "default_channel", small_icon: "ic_notification" } },
                 },
               }),
             })).ok;
@@ -121,7 +121,7 @@ serve(async () => {
             message: {
               token: deviceToken,
               notification: { title: "Riepilogo giornata 📊", body },
-              android: { notification: { sound: "default", channelId: "default_channel", smallIcon: "ic_notification" } },
+              android: { notification: { sound: "default", channel_id: "default_channel", small_icon: "ic_notification" } },
             },
           }),
         })).ok;
