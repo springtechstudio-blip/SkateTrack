@@ -49,8 +49,8 @@ function localTime(tz: string): string {
 
 serve(async () => {
   try {
-    const url = Deno.env.get("SUPABASE_URL")!;
-    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const url = Deno.env.get("SB_URL")!;
+    const key = Deno.env.get("SB_SERVICE_ROLE_KEY")!;
     const sa = JSON.parse(Deno.env.get("FCM_SERVICE_ACCOUNT")!);
     const hdrs = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
 

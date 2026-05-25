@@ -44,8 +44,8 @@ function pemToBuffer(pem: string): ArrayBuffer {
 
 serve(async (_req) => {
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseUrl = Deno.env.get("SB_URL") ?? "";
+    const supabaseKey = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
     const raw = Deno.env.get("FCM_SERVICE_ACCOUNT") ?? "";
     if (!raw) return new Response("Missing FCM_SERVICE_ACCOUNT", { status: 500 });
     const projectId = JSON.parse(raw).project_id;
