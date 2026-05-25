@@ -1,34 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SignJWT } from "npm:jose@5.9.6";
 
-let _accessToken = "";
-let _tokenExp = 0;
-
-async function getAccessToken(sa: any): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  if (_accessToken && now < _tokenExp) return _accessToken;
-  const jwt = await new SignJWT({
-    iss: sa.client_email,
-    scope: "https://www.googleapis.com/auth/firebase.messaging",
-    aud: sa.token_uri, iat: now, exp: now + 3600,
-  })
-    .setProtectedHeader({ alg: "RS256", typ: "JWT" })
-    .sign(await crypto.subtle.importKey("pkcs8", pemBuf(sa.private_key),
-      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]));
-  const r = await fetch(sa.token_uri, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: jwt }),
-  });
-  const d = await r.json();
-  _accessToken = d.access_token;
-  _tokenExp = now + 3500;
-  return _accessToken;
-}
-
-function pemBuf(pem: string): ArrayBuffer {
-  return Uint8Array.from(atob(pem.replace(/-----BEGIN [\w\s]+-----/, "").replace(/-----END [\w\s]+-----/, "").replace(/\s/g, "")), c => c.charCodeAt(0)).buffer;
-}
+const FCM_URL = "https://fcm.googleapis.com/fcm/send";
 
 function localDate(tz: string): string {
   try {
@@ -51,7 +23,7 @@ serve(async () => {
   try {
     const url = Deno.env.get("SB_URL")!;
     const key = Deno.env.get("SB_SERVICE_ROLE_KEY")!;
-    const sa = JSON.parse(Deno.env.get("FCM_SERVICE_ACCOUNT")!);
+    const fcmKey = Deno.env.get("FCM_SERVER_KEY")!;
     const hdrs = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
 
     const [settings, pushTokens] = await Promise.all([
@@ -60,7 +32,6 @@ serve(async () => {
     ]);
 
     const tokMap = new Map(pushTokens.map((t: any) => [t.user_id, t.token]));
-    const fcmUrl = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
     let sent = 0;
 
     for (const s of settings) {
@@ -81,17 +52,14 @@ serve(async () => {
           const undone = habits.filter((h: any) => !done.has(h.id));
           const canSend = s.last_habit_notification_date !== today || (s.habit_notifications_count || 0) < 3;
           if (undone.length && canSend) {
-            const accessToken = await getAccessToken(sa);
             const body = `Hai ${undone.length} abitudin${undone.length > 1 ? "i da completare" : "a da completare"}: ${undone.map((h: any) => h.name).join(", ")}`;
-            const ok = await (await fetch(fcmUrl, {
+            const ok = await (await fetch(FCM_URL, {
               method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+              headers: { "Content-Type": "application/json", Authorization: `key=${fcmKey}` },
               body: JSON.stringify({
-                message: {
-                  token: deviceToken,
-                  notification: { title: "Promemoria abitudini 📋", body },
-                  android: { notification: { sound: "default", channel_id: "default_channel", small_icon: "ic_notification" } },
-                },
+                to: deviceToken,
+                notification: { title: "Promemoria abitudini 📋", body, sound: "default" },
+                data: { click_action: "OPEN_APP" },
               }),
             })).ok;
             if (ok) {
@@ -112,17 +80,14 @@ serve(async () => {
           (await fetch(`${url}/rest/v1/skating_sessions?select=id&user_id=eq.${s.user_id}&date=eq.${today}`, { headers: hdrs })).json(),
           (await fetch(`${url}/rest/v1/habit_completions?select=id&user_id=eq.${s.user_id}&date=eq.${today}`, { headers: hdrs })).json(),
         ]);
-        const accessToken = await getAccessToken(sa);
         const body = `Abitudini: ${(hc || []).length} · Skating: ${(sessions || []).length} sessioni`;
-        const ok = await (await fetch(fcmUrl, {
+        const ok = await (await fetch(FCM_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+          headers: { "Content-Type": "application/json", Authorization: `key=${fcmKey}` },
           body: JSON.stringify({
-            message: {
-              token: deviceToken,
-              notification: { title: "Riepilogo giornata 📊", body },
-              android: { notification: { sound: "default", channel_id: "default_channel", small_icon: "ic_notification" } },
-            },
+            to: deviceToken,
+            notification: { title: "Riepilogo giornata 📊", body, sound: "default" },
+            data: { click_action: "OPEN_APP" },
           }),
         })).ok;
         if (ok) {
