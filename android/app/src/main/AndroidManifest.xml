@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -21,7 +22,7 @@
         </activity>
 
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
-        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="default_channel" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="skatetrack_default" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/ic_launcher_background" />
 
         <provider

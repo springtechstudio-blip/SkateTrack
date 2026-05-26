@@ -1,0 +1,33 @@
+package com.skatetrack.app;
+
+import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
+
+public class App extends Application {
+  public static final String CHANNEL_ID = "skatetrack_default";
+  public static final String CHANNEL_NAME = "SkateTrack";
+
+  @Override
+  public void onCreate() {
+    super.onCreate();
+    createNotificationChannel();
+  }
+
+  private void createNotificationChannel() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      NotificationChannel channel = new NotificationChannel(
+        CHANNEL_ID,
+        CHANNEL_NAME,
+        NotificationManager.IMPORTANCE_HIGH
+      );
+      channel.setDescription("Notifiche SkateTrack");
+      channel.setShowBadge(true);
+      channel.enableVibration(true);
+
+      NotificationManager manager = getSystemService(NotificationManager.class);
+      manager.createNotificationChannel(channel);
+    }
+  }
+}
