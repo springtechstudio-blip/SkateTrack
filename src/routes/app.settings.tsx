@@ -272,38 +272,39 @@ function SettingsPage() {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+    setAvatarUploading(true);
     try {
-      setAvatarUploading(true);
       const fileExt = file.name.split(".").pop();
       const filePath = `${user.id}/avatar_${Date.now()}.${fileExt}`;
 
-      // Upload file directly using Supabase client to storage bucket 'avatars'
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: true, contentType: file.type });
 
       if (uploadError) throw uploadError;
 
-      // Obtain public URL
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(filePath);
 
-      // Save public URL in profile
-      await updateProfile.mutateAsync({
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: user.id,
         display_name: displayNameInput || user.email?.split("@")[0] || "",
         avatar_url: publicUrl,
       });
+      if (profileError) throw profileError;
 
-      // Also save in user_settings table for absolute sync
-      await supabase.from("user_settings").upsert({
+      const { error: settingsError } = await supabase.from("user_settings").upsert({
         user_id: user.id,
         avatar_url: publicUrl,
       });
+      if (settingsError) throw settingsError;
 
+      qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+      qc.invalidateQueries({ queryKey: ["user_settings", user?.id] });
       toast.success(localT.avatarUploadSuccess);
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Errore caricamento avatar");
     } finally {
       setAvatarUploading(false);
     }
