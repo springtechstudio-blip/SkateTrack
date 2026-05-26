@@ -279,7 +279,7 @@ function SettingsPage() {
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true, contentType: file.type });
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
