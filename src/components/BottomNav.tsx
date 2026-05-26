@@ -17,6 +17,7 @@ export function BottomNav() {
       return data?.coach_mode ?? false;
     },
     enabled: !!user,
+    staleTime: 0,
   });
 
   const isCoach = coachQ.data ?? false;

@@ -391,6 +391,7 @@ function SettingsPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["user_settings", user?.id] });
+      qc.invalidateQueries({ queryKey: ["coach_mode"] });
     },
     onError: (err: any) => {
       toast.error(err.message);
