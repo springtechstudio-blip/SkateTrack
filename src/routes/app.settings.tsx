@@ -358,6 +358,7 @@ function SettingsPage() {
           evening_time: "21:00",
           avatar_url: null,
           timezone: tz,
+          coach_mode: false,
         };
         await supabase.from("user_settings").insert(defaults);
         return defaults;
@@ -422,6 +423,9 @@ function SettingsPage() {
         "skating_elements",
         "skating_locations",
         "skating_session_types",
+        "competitions",
+        "athletes",
+        "training_attendance",
       ];
 
       const backupData: Record<string, any> = {
@@ -439,28 +443,17 @@ function SettingsPage() {
       const content = JSON.stringify(backupData, null, 2);
       const filename = `skatetrack_backup_${new Date().toISOString().split("T")[0]}.json`;
       toast.dismiss();
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: "SkateTrack Backup", text: content.substring(0, 50000) });
-          return;
-        } catch (_) {}
-      }
-      try {
-        await navigator.clipboard.writeText(content);
-        toast.success("JSON copiato negli appunti!");
-      } catch (_) {
-        const blob = new Blob([content], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url; a.download = filename;
-        document.body.appendChild(a); a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        toast.success("JSON backup downloaded!");
-      }
+      const blob = new Blob([content], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Backup scaricato!");
     } catch (err: any) {
       toast.dismiss();
-      toast.error("Export failure: " + err.message);
+      toast.error("Export fallito: " + err.message);
     }
   };
 
@@ -487,6 +480,9 @@ function SettingsPage() {
         "skating_sessions",
         "habit_completions",
         "skating_session_elements",
+        "competitions",
+        "athletes",
+        "training_attendance",
       ];
 
       for (const tName of syncOrder) {
@@ -701,6 +697,9 @@ function SettingsPage() {
         "notes",
         "habit_completions",
         "habits",
+        "training_attendance",
+        "athletes",
+        "competitions",
       ];
 
       for (const tName of wipeOrder) {
@@ -993,7 +992,6 @@ function SettingsPage() {
           {/* Theme & Language Preferences Tab */}
           <TabsContent value="appearance" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Theme Settings card */}
               <Card className="bg-card/40 border-border/40 backdrop-blur-md">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -1004,46 +1002,24 @@ function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-3 gap-3">
-                    <button
-                      onClick={() => changeThemeMode("light")}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
-                        mode === "light"
-                          ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]"
-                          : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"
-                      }`}
-                    >
+                    <button onClick={() => changeThemeMode("light")}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${mode === "light" ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]" : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"}`}>
                       <Sun className="h-6 w-6" />
                       <span className="text-xs font-semibold">{localT.themeLight}</span>
                     </button>
-
-                    <button
-                      onClick={() => changeThemeMode("dark")}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
-                        mode === "dark"
-                          ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]"
-                          : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"
-                      }`}
-                    >
+                    <button onClick={() => changeThemeMode("dark")}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${mode === "dark" ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]" : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"}`}>
                       <Moon className="h-6 w-6" />
                       <span className="text-xs font-semibold">{localT.themeDark}</span>
                     </button>
-
-                    <button
-                      onClick={() => changeThemeMode("auto")}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
-                        mode === "auto"
-                          ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]"
-                          : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"
-                      }`}
-                    >
+                    <button onClick={() => changeThemeMode("auto")}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${mode === "auto" ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]" : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"}`}>
                       <Globe className="h-6 w-6" />
                       <span className="text-xs font-semibold">{localT.themeAuto}</span>
                     </button>
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Language Settings card */}
               <Card className="bg-card/40 border-border/40 backdrop-blur-md">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -1054,26 +1030,13 @@ function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => changeLanguage("it")}
-                      className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all h-24 ${
-                        lang === "it"
-                          ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]"
-                          : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"
-                      }`}
-                    >
+                    <button onClick={() => changeLanguage("it")}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all h-24 ${lang === "it" ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]" : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"}`}>
                       <span className="text-lg font-bold">🇮🇹 IT</span>
                       <span className="text-xs font-medium mt-1">Italiano</span>
                     </button>
-
-                    <button
-                      onClick={() => changeLanguage("en")}
-                      className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all h-24 ${
-                        lang === "en"
-                          ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]"
-                          : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"
-                      }`}
-                    >
+                    <button onClick={() => changeLanguage("en")}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all h-24 ${lang === "en" ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]" : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"}`}>
                       <span className="text-lg font-bold">🇬🇧 EN</span>
                       <span className="text-xs font-medium mt-1">English</span>
                     </button>
@@ -1081,6 +1044,27 @@ function SettingsPage() {
                 </CardContent>
               </Card>
             </div>
+            <Card className="bg-card/40 border-border/40 backdrop-blur-md">
+              <CardHeader>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  Modalità Allenatore
+                </CardTitle>
+                <CardDescription>Passa alla modalità allenatore per gestire atleti, presenze e gare.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-semibold">Allenatore</Label>
+                    <p className="text-xs text-muted-foreground">Sostituisce la sezione Skating con il pannello Allenatore</p>
+                  </div>
+                  <Switch
+                    checked={appSettings?.coach_mode ?? false}
+                    onCheckedChange={(checked) => updateSettings.mutate({ coach_mode: checked })}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Notifications Settings Tab */}

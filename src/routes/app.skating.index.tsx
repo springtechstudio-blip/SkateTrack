@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, BarChart3 } from "lucide-react";
+import { Plus, Trash2, BarChart3, Pencil, Calendar } from "lucide-react";
 import { RollerSkate } from "@/components/icons/RollerSkate";
 import { toast } from "sonner";
 import {
@@ -33,6 +33,8 @@ const TYPE_COLORS = ["oklch(0.78 0.16 165)", "oklch(0.7 0.18 250)", "oklch(0.75 
 
 function SkatingPage() {
   const qc = useQueryClient();
+  const [editSession, setEditSession] = useState<Session | null>(null);
+
   const sQ = useQuery({
     queryKey: ["skating"],
     queryFn: async () => {
@@ -42,7 +44,17 @@ function SkatingPage() {
     },
   });
 
+  const compQ = useQuery({
+    queryKey: ["competitions"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("competitions").select("*").order("date", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string; date: string; location: string | null; notes: string | null }[];
+    },
+  });
+
   const sessions = sQ.data ?? [];
+  const competitions = compQ.data ?? [];
 
   const stats = useMemo(() => {
     const totalMin = sessions.reduce((a, s) => a + s.duration_min, 0);
@@ -160,15 +172,20 @@ function SkatingPage() {
           <ul className="space-y-2">
             {sessions.map((s) => (
               <li key={s.id} className="rounded-xl border border-border bg-card/80 p-3 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 grid place-items-center text-primary font-bold text-xs">{s.duration_min}'</div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm">{s.session_type} {s.mood && <span>{s.mood}</span>}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {s.date} · int. {s.intensity}/5
-                    {s.rating != null && <> · voto {s.rating}/10</>}
-                    {s.location && <> · {s.location}</>}
-                  </p>
-                </div>
+                <button onClick={() => setEditSession(s)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 grid place-items-center text-primary font-bold text-xs shrink-0">{s.duration_min}'</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{s.session_type} {s.mood && <span>{s.mood}</span>}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {s.date} · int. {s.intensity}/5
+                      {s.rating != null && <> · voto {s.rating}/10</>}
+                      {s.location && <> · {s.location}</>}
+                    </p>
+                  </div>
+                </button>
+                <button onClick={() => setEditSession(s)} className="text-muted-foreground hover:text-primary p-1" aria-label="Modifica">
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
                 <button onClick={() => del.mutate(s.id)} className="text-muted-foreground hover:text-destructive p-1" aria-label="Elimina">
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -177,6 +194,41 @@ function SkatingPage() {
           </ul>
         )}
       </div>
+
+      {competitions.length > 0 && (
+        <section className="rounded-2xl border border-border bg-card/80 p-4">
+          <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-3 flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5" /> PROSSIME GARE
+          </p>
+          <div className="space-y-2">
+            {competitions.filter((c) => new Date(c.date) >= new Date(new Date().toDateString())).slice(0, 5).map((c) => {
+              const d = new Date(c.date);
+              return (
+                <div key={c.id} className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 grid place-items-center text-primary font-bold text-xs shrink-0">
+                    {d.getDate()}/{d.getMonth() + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{c.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {d.toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "long" })}
+                      {c.location && <> · {c.location}</>}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {editSession && (
+        <EditSessionDialog
+          session={editSession}
+          open={!!editSession}
+          onOpenChange={(o) => { if (!o) setEditSession(null); }}
+        />
+      )}
     </div>
   );
 }
@@ -196,6 +248,209 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
       <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-3">{title}</p>
       <div className="h-44">{children}</div>
     </div>
+  );
+}
+
+function EditSessionDialog({ session, open, onOpenChange }: { session: Session; open: boolean; onOpenChange: (o: boolean) => void }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [date, setDate] = useState(session.date);
+  const [duration, setDuration] = useState(session.duration_min);
+  const [intensity, setIntensity] = useState(session.intensity);
+  const [type, setType] = useState(session.session_type);
+  const [notes, setNotes] = useState(session.notes ?? "");
+  const [rating, setRating] = useState(session.rating ?? 7);
+  const [mood, setMood] = useState(session.mood ?? MOODS[2]);
+  const [energy, setEnergy] = useState(session.energy ?? 3);
+  const [difficulty, setDifficulty] = useState(session.difficulty ?? 3);
+  const [wentWell, setWentWell] = useState(session.went_well ?? "");
+  const [worked, setWorked] = useState(session.worked ?? "");
+  const [improve, setImprove] = useState(session.improve ?? "");
+  const [nextGoal, setNextGoal] = useState(session.next_goal ?? "");
+  const [location, setLocation] = useState(session.location ?? "");
+  const [elements, setElements] = useState<Record<string, string>>({});
+
+  const elementsQ = useQuery({
+    queryKey: ["skating_elements"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("skating_elements").select("*").eq("archived", false).order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const typesQ = useQuery({
+    queryKey: ["skating_types"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("skating_session_types").select("*").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const locationsQ = useQuery({
+    queryKey: ["skating_locations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("skating_locations").select("*").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const dbElements = elementsQ.data ?? [];
+  const dbTypes = typesQ.data ?? [];
+  const dbLocations = locationsQ.data ?? [];
+
+  const toggleEl = (name: string) => {
+    setElements((prev) => {
+      const copy = { ...prev };
+      if (copy[name]) delete copy[name];
+      else copy[name] = "Provato";
+      return copy;
+    });
+  };
+
+  const update = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("No user");
+      if (!type.trim()) throw new Error("Seleziona o scrivi un tipo");
+
+      const finalType = type.trim();
+      const finalLocation = location.trim() || null;
+
+      const typeExists = dbTypes.some((t: any) => t.name === finalType);
+      if (!typeExists) {
+        const { error: e1 } = await supabase.from("skating_session_types").insert({
+          user_id: user.id, name: finalType,
+        });
+        if (e1) throw e1;
+      }
+
+      if (finalLocation) {
+        const locExists = dbLocations.some((l: any) => l.name === finalLocation);
+        if (!locExists) {
+          const { error: e2 } = await supabase.from("skating_locations").insert({
+            user_id: user.id, name: finalLocation,
+          });
+          if (e2) throw e2;
+        }
+      }
+
+      const { error } = await supabase.from("skating_sessions").update({
+        date, duration_min: duration, intensity, session_type: finalType,
+        notes: notes || null, rating, mood, energy, difficulty,
+        went_well: wentWell || null, worked: worked || null, improve: improve || null, next_goal: nextGoal || null,
+        location: finalLocation,
+      }).eq("id", session.id);
+      if (error) throw error;
+
+      await supabase.from("skating_session_elements").delete().eq("session_id", session.id);
+
+      const rows = Object.entries(elements).map(([n, q]) => ({ session_id: session.id, user_id: user.id, element_name: n, quality: q }));
+      if (rows.length) {
+        const { error: e3 } = await supabase.from("skating_session_elements").insert(rows);
+        if (e3) throw e3;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["skating"] });
+      qc.invalidateQueries({ queryKey: ["skating_types"] });
+      qc.invalidateQueries({ queryKey: ["skating_locations"] });
+      qc.invalidateQueries({ queryKey: ["skating_elements"] });
+      toast.success("Sessione aggiornata");
+      onOpenChange(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm bg-card border-border max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Modifica sessione</DialogTitle></DialogHeader>
+        <form onSubmit={(e) => { e.preventDefault(); update.mutate(); }} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5"><Label>Data</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required /></div>
+            <div className="space-y-1.5"><Label>Durata (min)</Label><Input type="number" min={1} value={duration} onChange={(e) => setDuration(parseInt(e.target.value) || 0)} required /></div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Tipo</Label>
+            <Input list="edit-type-list" value={type} onChange={(e) => setType(e.target.value)} placeholder="es. Tecnica" required />
+            <datalist id="edit-type-list">
+              {dbTypes.map((t: any) => <option key={t.id} value={t.name} />)}
+            </datalist>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Luogo</Label>
+            <Input list="edit-loc-list" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="es. Palaghiaccio" />
+            <datalist id="edit-loc-list">
+              {dbLocations.map((l: any) => <option key={l.id} value={l.name} />)}
+            </datalist>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Voto: {rating}/10</Label>
+            <input type="range" min={1} max={10} step={0.5} value={rating} onChange={(e) => setRating(+e.target.value)} className="w-full accent-primary" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Mood</Label>
+            <div className="grid grid-cols-5 gap-1.5">
+              {MOODS.map((m) => (
+                <button type="button" key={m} onClick={() => setMood(m)} className={`h-10 rounded-lg text-xl transition ${mood === m ? "bg-primary/20 ring-2 ring-primary" : "bg-muted"}`}>{m}</button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Energia: {energy}/5</Label>
+              <div className="flex gap-1">{[1,2,3,4,5].map((n) => (
+                <button type="button" key={n} onClick={() => setEnergy(n)} className={`flex-1 h-8 rounded text-xs font-bold ${n<=energy?"bg-primary text-primary-foreground":"bg-muted text-muted-foreground"}`}>{n}</button>
+              ))}</div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Difficoltà: {difficulty}/5</Label>
+              <div className="flex gap-1">{[1,2,3,4,5].map((n) => (
+                <button type="button" key={n} onClick={() => setDifficulty(n)} className={`flex-1 h-8 rounded text-xs font-bold ${n<=difficulty?"bg-primary text-primary-foreground":"bg-muted text-muted-foreground"}`}>{n}</button>
+              ))}</div>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Intensità: {intensity}/5</Label>
+            <div className="flex gap-1.5">{[1,2,3,4,5].map((n) => (
+              <button type="button" key={n} onClick={() => setIntensity(n)} className={`flex-1 h-9 rounded-lg font-bold ${n<=intensity?"bg-primary text-primary-foreground":"bg-muted text-muted-foreground"}`}>{n}</button>
+            ))}</div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Elementi lavorati</Label>
+            {dbElements.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">
+                Aggiungi gli elementi nelle{' '}
+                <Link to="/app/settings" className="text-primary underline">impostazioni</Link>.
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                {dbElements.map((el: any) => {
+                  const sel = elements[el.name];
+                  return (
+                    <div key={el.id} className="flex items-center gap-2">
+                      <button type="button" onClick={() => toggleEl(el.name)} className={`text-xs px-2 py-1 rounded-md font-semibold flex-1 text-left ${sel ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>{el.name}</button>
+                      {sel && (
+                        <Select value={sel} onValueChange={(v) => setElements({ ...elements, [el.name]: v })}>
+                          <SelectTrigger className="h-7 text-xs w-28 bg-input border-border"><SelectValue /></SelectTrigger>
+                          <SelectContent>{QUALITIES.map((q) => <SelectItem key={q} value={q}>{q}</SelectItem>)}</SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="space-y-1.5"><Label>Com'è andata</Label><Textarea value={wentWell} onChange={(e) => setWentWell(e.target.value)} rows={2} /></div>
+          <div className="space-y-1.5"><Label>Cosa ha funzionato</Label><Textarea value={worked} onChange={(e) => setWorked(e.target.value)} rows={2} /></div>
+          <div className="space-y-1.5"><Label>Cosa migliorare</Label><Textarea value={improve} onChange={(e) => setImprove(e.target.value)} rows={2} /></div>
+          <div className="space-y-1.5"><Label>Obiettivo prossima sessione</Label><Textarea value={nextGoal} onChange={(e) => setNextGoal(e.target.value)} rows={2} /></div>
+          <div className="space-y-1.5"><Label>Note libere</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} /></div>
+          <Button type="submit" disabled={update.isPending} className="w-full font-semibold">Salva modifiche</Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

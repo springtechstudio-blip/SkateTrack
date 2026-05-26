@@ -1,6 +1,16 @@
+// Supabase Edge Function: send-notifications
+// Sends pending notifications from the notification_queue via Firebase Cloud Messaging (FCM)
+//
+// 1. Set FCM_SERVER_KEY in Supabase Dashboard > Edge Functions secrets
+//    (trovabile in Firebase Console > Project Settings > Cloud Messaging)
+//
+// 2. Schedule this to run every minute via:
+//    SELECT cron.schedule('send-notifications', '* * * * *', 'SELECT net.http_post(url:= ''https://<project>.supabase.co/functions/v1/send-notifications'', headers:= ''{"Authorization":"Bearer <anon-key>"}'' )');
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const FCM_URL = "https://fcm.googleapis.com/fcm/send";
+const SERVER_KEY = Deno.env.get("FCM_SERVER_KEY") ?? "";
 
 interface QueueItem {
   id: number;
@@ -11,9 +21,8 @@ interface QueueItem {
 
 serve(async (_req) => {
   try {
-    const supabaseUrl = Deno.env.get("SB_URL") ?? "";
-    const supabaseKey = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
-    const serverKey = Deno.env.get("FCM_SERVER_KEY") ?? "";
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
     const res = await fetch(`${supabaseUrl}/rest/v1/notification_queue?sent_at=is.null&order=created_at.asc&limit=10`, {
       headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
@@ -26,7 +35,7 @@ serve(async (_req) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `key=${serverKey}`,
+          Authorization: `key=${SERVER_KEY}`,
         },
         body: JSON.stringify({
           to: row.token,

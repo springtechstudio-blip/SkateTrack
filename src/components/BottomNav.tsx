@@ -1,16 +1,33 @@
 import { Link, useLocation } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { Flame, FileText, Settings } from "lucide-react";
 import { RollerSkate } from "@/components/icons/RollerSkate";
 
-const items = [
-  { to: "/app", label: "Abitudini", icon: Flame },
-  { to: "/app/notes", label: "Note", icon: FileText },
-  { to: "/app/skating", label: "Skating", icon: RollerSkate },
-  { to: "/app/settings", label: "Impostazioni", icon: Settings },
-] as const;
-
 export function BottomNav() {
   const { pathname } = useLocation();
+  const { user } = useAuth();
+
+  const coachQ = useQuery({
+    queryKey: ["coach_mode"],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase.from("user_settings").select("coach_mode").eq("user_id", user.id).maybeSingle();
+      return data?.coach_mode ?? false;
+    },
+    enabled: !!user,
+  });
+
+  const isCoach = coachQ.data ?? false;
+
+  const items = [
+    { to: "/app", label: "Abitudini", icon: Flame },
+    { to: "/app/notes", label: "Note", icon: FileText },
+    { to: isCoach ? "/app/coach" : "/app/skating", label: isCoach ? "Allenatore" : "Skating", icon: RollerSkate },
+    { to: "/app/settings", label: "Impostazioni", icon: Settings },
+  ] as const;
+
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-border bg-sidebar/95 backdrop-blur-xl">
       <div className="mx-auto max-w-xl grid grid-cols-4">
