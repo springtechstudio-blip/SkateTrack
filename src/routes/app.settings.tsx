@@ -1020,26 +1020,52 @@ function SettingsPage() {
                       <span className="text-xs font-semibold">{localT.themeAuto}</span>
                     </button>
                 </div>
+              </CardContent>
+            </Card>
 
-                {/* Timezone selector */}
-                <div className="flex items-center justify-between pt-4">
-                  <div className="space-y-0.5 max-w-[80%]">
-                    <Label className="text-sm font-semibold">Fuso orario</Label>
-                    <p className="text-xs text-muted-foreground">Fuso orario per il calcolo degli orari delle notifiche.</p>
+            <Card className="bg-card/40 border-border/40 backdrop-blur-md">
+              <CardHeader>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  {localT.langTitle}
+                </CardTitle>
+                <CardDescription>{localT.langDesc}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => changeLanguage("it")}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all h-24 ${lang === "it" ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]" : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"}`}>
+                    <span className="text-lg font-bold">🇮🇹 IT</span>
+                    <span className="text-xs font-medium mt-1">Italiano</span>
+                  </button>
+                  <button onClick={() => changeLanguage("en")}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all h-24 ${lang === "en" ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.15)]" : "border-border/40 bg-background/20 text-muted-foreground hover:bg-muted/40"}`}>
+                    <span className="text-lg font-bold">🇬🇧 EN</span>
+                    <span className="text-xs font-medium mt-1">English</span>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+            </div>
+
+            <Card className="bg-card/40 border-border/40 backdrop-blur-md">
+              <CardHeader>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  Modalità Allenatore
+                </CardTitle>
+                <CardDescription>Passa alla modalità allenatore per gestire atleti, presenze e gare.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-semibold">Allenatore</Label>
+                    <p className="text-xs text-muted-foreground">Sostituisce la sezione Skating con il pannello Allenatore</p>
                   </div>
-                  <Select
-                    value={appSettings?.timezone || "Europe/Rome"}
-                    onValueChange={(v) => updateSettings.mutate({ timezone: v })}
-                  >
-                    <SelectTrigger className="w-44 bg-background/40 border-border">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border max-h-60">
-                      {["Europe/Rome", "Europe/London", "Europe/Paris", "Europe/Berlin", "Europe/Madrid", "Europe/Zurich", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai", "Australia/Sydney", "Pacific/Auckland", "UTC"].map((tz) => (
-                        <SelectItem key={tz} value={tz} className="text-sm">{tz.replace("/", " / ")}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Switch
+                    checked={appSettings?.coach_mode ?? false}
+                    onCheckedChange={(checked) => updateSettings.mutate({ coach_mode: checked })}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -1109,6 +1135,26 @@ function SettingsPage() {
                       </div>
                     </div>
                   )}
+                </div>
+
+                <div className="flex items-center justify-between pt-4">
+                  <div className="space-y-0.5 max-w-[80%]">
+                    <Label className="text-sm font-semibold">Fuso orario</Label>
+                    <p className="text-xs text-muted-foreground">Per il calcolo degli orari delle notifiche.</p>
+                  </div>
+                  <Select
+                    value={appSettings?.timezone || "Europe/Rome"}
+                    onValueChange={(v) => updateSettings.mutate({ timezone: v })}
+                  >
+                    <SelectTrigger className="w-44 bg-background/40 border-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border max-h-60">
+                      {["Europe/Rome","Europe/London","Europe/Paris","Europe/Berlin","Europe/Madrid","Europe/Zurich","America/New_York","America/Chicago","America/Denver","America/Los_Angeles","Asia/Tokyo","Asia/Shanghai","Asia/Dubai","Australia/Sydney","Pacific/Auckland","UTC"].map((tz)=>(
+                        <SelectItem key={tz} value={tz} className="text-sm">{tz.replace("/"," / ")}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>
